@@ -20,12 +20,12 @@ iterator1 = 0
 # Dla kazdego repozytorium.
 
 while iterator1 < len(repositories["repositories"]):
-    if "smart" in repositories["repositories"][iterator1]: # Pomin repozytoria, ktore zawieraja "smart" w nazwie (SmartOffice).
-        iterator1 += 1
+    if repositories["repositories"][iterator1] in constants["repositories_to_leave"]:
+       iterator1 += 1
 
-        continue
+       continue
 
-    print "REPOZYTORIUM: \"" + repositories["repositories"][iterator1] + "\""
+    print "[*] Repozytorium: \"" + repositories["repositories"][iterator1] + "\""
 
     variable = subprocess.Popen("curl -k -u "
                                 + constants["user"]
@@ -84,11 +84,14 @@ while iterator1 < len(repositories["repositories"]):
                                         + blob_digest[1],
                                         stdout = subprocess.PIPE,
                                         shell = True,
-                                        stderr = subprocess.PIPE) # Pobierz kropellke (blob).
+                                        stderr = subprocess.PIPE) # Pobierz kropelke (blob).
 
             digest_blob = json.loads(variable.stdout.read())
 
-            tag_blobs[digest_blob["created"]] = sorted_tags[iterator2] # Przypisz jako klucz kropelke (blob), a jako wartosc nacznik kontenera.
+            # Sprawdz czy zwrocono informacje kiedy obraz zostal stworzony.
+
+            if "created" in digest_blob:
+                tag_blobs[digest_blob["created"]] = sorted_tags[iterator2] # Przypisz jako klucz kropelke (blob), a jako wartosc znacznik kontenera.
 
         iterator2 += 1
 
@@ -104,7 +107,17 @@ while iterator1 < len(repositories["repositories"]):
 
             continue
 
-        print "Znacznik: \"" + tag_blobs[tag_blob_sorted[iterator2]] + "\""
+        # Sprawdz czy na liscie kluczy wersji kontenerow, ktore zostawic jest aktualnie przetwarzane repozytorium.
+
+        if repositories["repositories"][iterator1] in constants["containers_to_leave"].keys():
+            # Pomin znacznik (wersje), ktory jest w stalych.
+
+            if tag_blobs[tag_blob_sorted[iterator2]] in constants["containers_to_leave"][repositories["repositories"][iterator1]]:
+                iterator2 += 1
+
+                continue
+
+        print "[*] Znacznik do usuniecia: \"" + tag_blobs[tag_blob_sorted[iterator2]] + "\""
 
         # Wyciagnij skrot SHA256.
 
@@ -128,7 +141,7 @@ while iterator1 < len(repositories["repositories"]):
         if sha256_digest: # Sprawdz czy informacje zostaly zwrocone w tablicy.
             # Usun znacznik.
 
-            print ("Wywolanie: \""
+            print ("[*] Wywolanie usuwajace: \""
                    + "curl -k -u "
                    + constants["user"]
                    + ":"
@@ -152,8 +165,6 @@ while iterator1 < len(repositories["repositories"]):
             url = url.rstrip() # Usun biale znaki.
 
             var = requests.delete(url, verify = False, auth = (constants["user"], constants["password"]))
-
-            print "Zwrocono status o kodzie: " + var.status_code
 
         iterator2 += 1
 

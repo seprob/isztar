@@ -1,6 +1,19 @@
 {
-  "hostname": "https://registry/v2",
+  "hostname": "https://hostname",
   "user": "user",
-  "password": "user",
-  "no_images_to_left": 10
+  "password": "password",
+  "no_images_to_left": 15,
+  "repositories_to_leave": [
+    "repository1",
+    "repository2"
+  ],
+  "containers_to_leave": {
+    "repository3": [
+      "version1", "version2"
+    ],
+    "repository4": [
+      "version1"
+    ]
+  }
 }
+

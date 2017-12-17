@@ -12,7 +12,7 @@ Change "dockerregistry_registry_v2_1" to your Registry container name.
 
 ## Usage
 
-You should use Python 2 to run this application.
+You should use Python 2 to run this application. 
 
 Before you run Isztar, modify the "constants.json" file according to your requirements:
 - "hostname": host name of your Docker Registry server,
