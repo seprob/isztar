@@ -33,7 +33,7 @@ while iterator1 < len(repositories["repositories"]):
                                 + constants["password"]
                                 + " -X GET "
                                 + constants["hostname"]
-                                + "/"
+                                + "/v2/"
                                 + repositories["repositories"][iterator1]
                                 + "/tags/list",
                                 stdout = subprocess.PIPE,
