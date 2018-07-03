@@ -9,7 +9,7 @@ variable = subprocess.Popen("curl -k -u "
                             + constants["password"]
                             + " -X GET "
                             + constants["hostname"]
-                            + "/_catalog",
+                            + "/v2/_catalog",
                             stdout = subprocess.PIPE,
                             shell = True,
                             stderr = subprocess.PIPE) # Pobierz aktualny katalog repozytoriow.
