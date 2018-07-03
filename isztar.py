@@ -57,7 +57,7 @@ while iterator1 < len(repositories["repositories"]):
                                     + constants["password"]
                                     + ' -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -D - '
                                     + constants["hostname"]
-                                    + "/"
+                                    + "/v2/"
                                     + repositories["repositories"][iterator1]
                                     + "/"
                                     + "manifests/"
@@ -77,7 +77,7 @@ while iterator1 < len(repositories["repositories"]):
                                         + constants["password"]
                                         + " -sS -X GET "
                                         + constants["hostname"]
-                                        + "/"
+                                        + "/v2/"
                                         + repositories["repositories"][iterator1]
                                         + "/blobs"
                                         + "/"
@@ -127,7 +127,7 @@ while iterator1 < len(repositories["repositories"]):
                                     + constants["password"]
                                     + ' -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -D - '
                                     + constants["hostname"]
-                                    + "/"
+                                    + "/v2/"
                                     + repositories["repositories"][iterator1]
                                     + "/"
                                     + "manifests/"
@@ -148,7 +148,7 @@ while iterator1 < len(repositories["repositories"]):
                    + constants["password"]
                    + " -X DELETE "
                    + constants["hostname"]
-                   + "/"
+                   + "/v2/"
                    + repositories["repositories"][iterator1]
                    + "/"
                    + "manifests/"
@@ -156,7 +156,7 @@ while iterator1 < len(repositories["repositories"]):
                    + "\"").rstrip()
 
             url = (constants["hostname"]
-                   + "/"
+                   + "/v2/"
                    + repositories["repositories"][iterator1]
                    + "/"
                    + "manifests/"
