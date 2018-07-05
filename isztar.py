@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import subprocess, json, requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 constants = json.loads(open("constants.json").read())
 variable = subprocess.Popen("curl -k -u "
@@ -66,10 +69,11 @@ while iterator1 < len(repositories["repositories"]):
                                     stdout = subprocess.PIPE,
                                     shell = True,
                                     stderr = subprocess.PIPE) # Wyciagnij skrot kropelki ("blob digest").
+
         blob_digest = variable.stdout.read().split() # Wczytaj dane i stworz tablice.
 
         if blob_digest: # Sprawdz czy informacje zostaly zwrocone.
-            blob_digest[1] = blob_digest[1][1:-1] # Pozbadz sie cudzyslowow.
+            blob_digest[3] = blob_digest[3][1:-1] # Pozbadz sie cudzyslowow.
 
             variable = subprocess.Popen("curl -k -u "
                                         + constants["user"]
@@ -81,7 +85,7 @@ while iterator1 < len(repositories["repositories"]):
                                         + repositories["repositories"][iterator1]
                                         + "/blobs"
                                         + "/"
-                                        + blob_digest[1],
+                                        + blob_digest[3],
                                         stdout = subprocess.PIPE,
                                         shell = True,
                                         stderr = subprocess.PIPE) # Pobierz kropelke (blob).
@@ -132,7 +136,7 @@ while iterator1 < len(repositories["repositories"]):
                                     + "/"
                                     + "manifests/"
                                     + tag_blobs[tag_blob_sorted[iterator2]]
-                                    + " | grep Docker-Content-Digest",
+                                    + " | grep docker-content-digest",
                                     stdout = subprocess.PIPE,
                                     shell = True,
                                     stderr = subprocess.PIPE)
