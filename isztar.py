@@ -5,6 +5,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+blob_digest_index = 1
 constants = json.loads(open("constants.json").read())
 variable = subprocess.Popen("curl -k -u "
                             + constants["user"]
@@ -42,8 +43,15 @@ while iterator1 < len(repositories["repositories"]):
                                 stdout = subprocess.PIPE,
                                 shell = True,
                                 stderr = subprocess.PIPE) # Pobierz znaczniki dla danego repozytorium.
+
     tags_json = variable.stdout.read() # Przypisz do zmiennej.
     tags = json.loads(tags_json) # Zamien na JSON-a.
+    
+    if tags["tags"] is None:
+        iterator1 += 1
+
+        continue
+    
     sorted_tags = tags["tags"] # Przypisz jako liste.
 
     sorted_tags.sort() # Posortuj.
@@ -73,24 +81,19 @@ while iterator1 < len(repositories["repositories"]):
         blob_digest = variable.stdout.read().split() # Wczytaj dane i stworz tablice.
 
         if blob_digest: # Sprawdz czy informacje zostaly zwrocone.
-            blob_digest[3] = blob_digest[3][1:-1] # Pozbadz sie cudzyslowow.
+            blob_digest[blob_digest_index] = blob_digest[blob_digest_index][1:-1] # Pozbadz sie cudzyslowow.
 
-            variable = subprocess.Popen("curl -k -u "
-                                        + constants["user"]
-                                        + ":"
-                                        + constants["password"]
-                                        + " -sS -X GET "
-                                        + constants["hostname"]
-                                        + "/v2/"
-                                        + repositories["repositories"][iterator1]
-                                        + "/blobs"
-                                        + "/"
-                                        + blob_digest[3],
-                                        stdout = subprocess.PIPE,
-                                        shell = True,
-                                        stderr = subprocess.PIPE) # Pobierz kropelke (blob).
-
-            digest_blob = json.loads(variable.stdout.read())
+            digest_blob = requests.get("https://"
+                                       + constants["hostname"]
+                                       + "/v2/"
+                                       + repositories["repositories"][iterator1]
+                                       + "/blobs"
+                                       + "/"
+                                       + blob_digest[blob_digest_index], 
+                                       verify = False, 
+                                       auth = ('', ''))
+            
+            digest_blob = digest_blob.json()
 
             # Sprawdz czy zwrocono informacje kiedy obraz zostal stworzony.
 
@@ -125,22 +128,21 @@ while iterator1 < len(repositories["repositories"]):
 
         # Wyciagnij skrot SHA256.
 
-        variable = subprocess.Popen('curl -k -u '
-                                    + constants["user"]
-                                    + ":"
-                                    + constants["password"]
-                                    + ' -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -D - '
-                                    + constants["hostname"]
-                                    + "/v2/"
-                                    + repositories["repositories"][iterator1]
-                                    + "/"
-                                    + "manifests/"
-                                    + tag_blobs[tag_blob_sorted[iterator2]]
-                                    + " | grep docker-content-digest",
-                                    stdout = subprocess.PIPE,
-                                    shell = True,
-                                    stderr = subprocess.PIPE)
-        sha256_digest = variable.stdout.read().partition(": ")[2]
+        headers = {
+            'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
+        }
+        response = requests.get("https://"
+                                + constants["hostname"]
+                                + "/v2/"
+                                + repositories["repositories"][iterator1]
+                                + "/"
+                                + "manifests/"
+                                + tag_blobs[tag_blob_sorted[iterator2]],
+                                headers = headers,
+                                verify = False,
+                                auth = ('', ''))
+
+        sha256_digest = response.headers['docker-content-digest']
 
         if sha256_digest: # Sprawdz czy informacje zostaly zwrocone w tablicy.
             # Usun znacznik.
@@ -159,7 +161,8 @@ while iterator1 < len(repositories["repositories"]):
                    + sha256_digest.rstrip()
                    + "\"").rstrip()
 
-            url = (constants["hostname"]
+            url = ("https://"
+                   + constants["hostname"]
                    + "/v2/"
                    + repositories["repositories"][iterator1]
                    + "/"
