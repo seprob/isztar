@@ -5,20 +5,14 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-blob_digest_index = 1
 constants = json.loads(open("constants.json").read())
-variable = subprocess.Popen("curl -k -u "
-                            + constants["user"]
-                            + ":"
-                            + constants["password"]
-                            + " -X GET "
-                            + constants["hostname"]
-                            + "/v2/_catalog",
-                            stdout = subprocess.PIPE,
-                            shell = True,
-                            stderr = subprocess.PIPE) # Pobierz aktualny katalog repozytoriow.
-repositories_json = variable.stdout.read() # Przypisz do zmiennej.
-repositories = json.loads(repositories_json) # Zamien na JSON-a.
+variable = requests.get("https://"
+                        + constants["hostname"]
+                        + "/v2/"
+                        + "_catalog",
+                        verify = False,
+                        auth = ('', ''))
+repositories = variable.json()
 iterator1 = 0
 
 # Dla kazdego repozytorium.
@@ -31,21 +25,15 @@ while iterator1 < len(repositories["repositories"]):
 
     print "[*] Repozytorium: \"" + repositories["repositories"][iterator1] + "\""
 
-    variable = subprocess.Popen("curl -k -u "
-                                + constants["user"]
-                                + ":"
-                                + constants["password"]
-                                + " -X GET "
-                                + constants["hostname"]
-                                + "/v2/"
-                                + repositories["repositories"][iterator1]
-                                + "/tags/list",
-                                stdout = subprocess.PIPE,
-                                shell = True,
-                                stderr = subprocess.PIPE) # Pobierz znaczniki dla danego repozytorium.
+    variable = requests.get("https://"
+                            + constants["hostname"]
+                            + "/v2/"
+                            + repositories["repositories"][iterator1]
+                            + "/tags/list",
+                            verify = False,
+                            auth = ('', ''))
 
-    tags_json = variable.stdout.read() # Przypisz do zmiennej.
-    tags = json.loads(tags_json) # Zamien na JSON-a.
+    tags = variable.json()  
     
     if tags["tags"] is None:
         iterator1 += 1
@@ -62,38 +50,41 @@ while iterator1 < len(repositories["repositories"]):
     tag_blobs = {} # Slownik gdzie kluczem klucz kropelka (blob), a jako wartosc znacznik kontenera.
 
     while iterator2 < len(sorted_tags):
-        variable = subprocess.Popen('curl -k -u '
-                                    + constants["user"]
-                                    + ":"
-                                    + constants["password"]
-                                    + ' -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -D - '
-                                    + constants["hostname"]
-                                    + "/v2/"
-                                    + repositories["repositories"][iterator1]
-                                    + "/"
-                                    + "manifests/"
-                                    + sorted_tags[iterator2]
-                                    + " | grep digest",
-                                    stdout = subprocess.PIPE,
-                                    shell = True,
-                                    stderr = subprocess.PIPE) # Wyciagnij skrot kropelki ("blob digest").
+        headers = {
+            'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
+        }
 
-        blob_digest = variable.stdout.read().split() # Wczytaj dane i stworz tablice.
+        variable = requests.get("https://"
+                                + constants["hostname"]
+                                + "/v2/"
+                                + repositories["repositories"][iterator1]
+                                + "/"
+                                + "manifests/"
+                                + sorted_tags[iterator2],
+                                headers = headers,
+                                verify = False,
+                                auth = ('', ''))
+        blob_digest = json.loads(variable.text)["config"]["digest"]
 
         if blob_digest: # Sprawdz czy informacje zostaly zwrocone.
-            blob_digest[blob_digest_index] = blob_digest[blob_digest_index][1:-1] # Pozbadz sie cudzyslowow.
-
             digest_blob = requests.get("https://"
                                        + constants["hostname"]
                                        + "/v2/"
                                        + repositories["repositories"][iterator1]
                                        + "/blobs"
                                        + "/"
-                                       + blob_digest[blob_digest_index], 
+                                       + blob_digest, 
                                        verify = False, 
                                        auth = ('', ''))
             
-            digest_blob = digest_blob.json()
+            digest_blob = digest_blob.text
+
+            if "Internal Server Error" in digest_blob:
+               iterator2 += 1
+
+               continue
+
+            digest_blob = json.loads(digest_blob)
 
             # Sprawdz czy zwrocono informacje kiedy obraz zostal stworzony.
 
@@ -131,6 +122,7 @@ while iterator1 < len(repositories["repositories"]):
         headers = {
             'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
         }
+
         response = requests.get("https://"
                                 + constants["hostname"]
                                 + "/v2/"
