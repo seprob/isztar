@@ -64,6 +64,21 @@ while iterator1 < len(repositories["repositories"]):
                                 headers = headers,
                                 verify = False,
                                 auth = ('', ''))
+        
+        if variable.status_code == 404:
+          print "[!] I received error 404 (no deleting): \"" + "https://" + constants["hostname"] + "/v2/" + repositories["repositories"][iterator1] + "/" + "manifests/" + sorted_tags[iterator2] + "\""
+
+          iterator2 += 1
+
+          continue
+
+        if not 'config' in json.loads(variable.text):
+          print "[!] There is no \"config\" key (no deleting): \"" + "https://" + constants["hostname"] + "/v2/" + repositories["repositories"][iterator1] + "/" + "manifests/" + sorted_tags[iterator2] + "\""
+
+          iterator2 += 1
+
+          continue 
+
         blob_digest = json.loads(variable.text)["config"]["digest"]
 
         if blob_digest: # Sprawdz czy informacje zostaly zwrocone.
