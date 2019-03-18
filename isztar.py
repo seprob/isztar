@@ -15,7 +15,7 @@ variable = requests.get("https://"
 repositories = variable.json()
 iterator1 = 0
 
-# Dla kazdego repozytorium.
+# For every repository.
 
 while iterator1 < len(repositories["repositories"]):
     if repositories["repositories"][iterator1] in constants["repositories_to_leave"]:
@@ -23,7 +23,7 @@ while iterator1 < len(repositories["repositories"]):
 
        continue
 
-    print "[*] Repozytorium: \"" + repositories["repositories"][iterator1] + "\""
+    print "[*] Repository: \"" + repositories["repositories"][iterator1] + "\""
 
     variable = requests.get("https://"
                             + constants["hostname"]
@@ -40,9 +40,9 @@ while iterator1 < len(repositories["repositories"]):
 
         continue
     
-    sorted_tags = tags["tags"] # Przypisz jako liste.
+    sorted_tags = tags["tags"] # Assign as a list.
 
-    sorted_tags.sort() # Posortuj.
+    sorted_tags.sort() # Sort.
 
     # Wyciaganie danych na temat utworzenia kontenera.
 
@@ -66,14 +66,29 @@ while iterator1 < len(repositories["repositories"]):
                                 auth = ('', ''))
         
         if variable.status_code == 404:
-          print "[!] I received error 404 (no deleting): \"" + "https://" + constants["hostname"] + "/v2/" + repositories["repositories"][iterator1] + "/" + "manifests/" + sorted_tags[iterator2] + "\""
+          print "[!] I received error 404 (no deleting): \"" 
+          + "https://" + constants["hostname"] 
+          + "/v2/" 
+          + repositories["repositories"][iterator1] 
+          + "/" 
+          + "manifests/" 
+          + sorted_tags[iterator2] 
+          + "\""
 
           iterator2 += 1
 
           continue
 
         if not 'config' in json.loads(variable.text):
-          print "[!] There is no \"config\" key (no deleting): \"" + "https://" + constants["hostname"] + "/v2/" + repositories["repositories"][iterator1] + "/" + "manifests/" + sorted_tags[iterator2] + "\""
+          print "[!] There is no \"config\" key (no deleting): \"" 
+          + "https://" 
+          + constants["hostname"] 
+          + "/v2/" 
+          + repositories["repositories"][iterator1] 
+          + "/" 
+          + "manifests/" 
+          + sorted_tags[iterator2] 
+          + "\""
 
           iterator2 += 1
 
@@ -104,7 +119,9 @@ while iterator1 < len(repositories["repositories"]):
             # Sprawdz czy zwrocono informacje kiedy obraz zostal stworzony.
 
             if "created" in digest_blob:
-                tag_blobs[digest_blob["created"]] = sorted_tags[iterator2] # Przypisz jako klucz kropelke (blob), a jako wartosc znacznik kontenera.
+                # Przypisz jako klucz kropelke (blob), a jako wartosc znacznik kontenera.
+
+                tag_blobs[digest_blob["created"]] = sorted_tags[iterator2]
 
         iterator2 += 1
 
@@ -152,7 +169,7 @@ while iterator1 < len(repositories["repositories"]):
         sha256_digest = response.headers['docker-content-digest']
 
         if sha256_digest: # Sprawdz czy informacje zostaly zwrocone w tablicy.
-            # Usun znacznik.
+            # Remove the tag.
 
             print ("[*] Wywolanie usuwajace: \""
                    + "curl -k -u "
@@ -176,7 +193,7 @@ while iterator1 < len(repositories["repositories"]):
                    + "manifests/"
                    + sha256_digest)
 
-            url = url.rstrip() # Usun biale znaki.
+            url = url.rstrip() # Remove white signs.
 
             var = requests.delete(url, verify = False, auth = (constants["user"], constants["password"]))
 
@@ -184,4 +201,4 @@ while iterator1 < len(repositories["repositories"]):
 
     iterator1 += 1
 
-    print "" # Nowa linia.
+    print "" # New line.
